@@ -53,12 +53,11 @@ cp .env.sample .env
 3. Edit the `.env` file and fill in your values:
 
 ```env
-REPO_URL=
-BACKUP_DIR=
-REPO_NAME=
-MAX_BACKUPS=
-MAX_RUNS=
-
+REPO_URL=git@github.com:yourusername/yourrepo.git
+BACKUP_DIR=/path/to/backup/directory
+REPO_NAME=your-repo-name
+MAX_BACKUPS=5
+MAX_RUNS=3
 ```
 
 4. Make the script executable:
@@ -69,20 +68,28 @@ chmod +x backup.sh
 
 ---
 
-## 🚀 Running the Script
+## 🚀 Running the Script with Docker (For Task)
+
+For this task, you need to run the script using Docker. Follow these steps:
+
+1. **Create a Dockerfile**
+
+2. **Build the Docker Image:**
 
 ```bash
-./backup.sh
+docker build -t backup-script .
 ```
 
-### 🔁 What the Script Does
+3. **Run the Docker Container:**
 
-- Clones the GitHub repository.
-- Creates a `.tar.gz` archive of the repo.
-- Generates a version in the format `X.Y.Z`, incrementing the patch version.
-- Stores the backup in the `BACKUP_DIR`.
-- Logs the backup information in `versions.json`.
-- Deletes older backups if they exceed `MAX_BACKUPS`.
+```bash
+docker run --rm -v "$(pwd)/.env:/backup/.env" backup-script --max-runs 3 --max-backups 5
+```
+
+### Explanation of Docker Commands:
+
+- `docker build -t backup-script .`: Builds the Docker image from the current directory using the provided Dockerfile.
+- `docker run --rm -v "$(pwd)/.env:/backup/.env" backup-script`: Runs the backup script in a Docker container with the environment variables from your `.env` file.
 
 ---
 
@@ -124,31 +131,3 @@ git commit -m "Initial backup script"
 ```bash
 git push origin backup
 ```
-
-## Docker Setup for the Script
-
-To use the script with Docker, follow these steps:
-
-1. Create a Dockerfile
-
-2. Build the Docker Image:
-
-```bash
-docker build -t backup-script .
-
-```
-
-3. Run the Docker Container:
-
-```bash
-docker run --rm -v "$(pwd)/.env:/backup/.env" backup-script --max-runs 3 --max-backups 5
-
-```
-
-### Explanation of Docker Commands:
-
-- `docker build -t backup-script .`: Builds the Docker image from the current directory using the provided Dockerfile.
-
-- `docker run --rm -v "$(pwd)/.env:/backup/.env" backup-script`: Runs the backup script in a Docker container with the environment variables from your .env file.
-
-## Ensure that the .env file is correctly configured before running the Docker container. """
