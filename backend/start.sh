@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # checks if database is available now, if not - wait 1 second
 while ! nc -z $DB_HOST $DB_PORT; do

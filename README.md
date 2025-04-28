@@ -1,145 +1,111 @@
-# 🛠️ DevOps - Task 1: Backup Script
+# 🛠️ DevOps - Task 2: Docker/Docker Compose
 
-This project includes a Bash script to automate GitHub repository backups. It creates versioned `.tar.gz` archives, logs metadata in JSON, and keeps only the latest backups based on configuration.
+## 1. Project Setup
 
----
+Create Docker containers for your project:
 
-## 📁 Project Structure
+Create Docker containers for Backend, Frontend, Nginx, and PostgreSQL.
 
-```
-.
-├── backup.sh         # Main bash script
-├── .env              # Environment variables (created from .env.sample)
-├── .env.sample       # Template for configuration
-├── .gitignore        # Ignores .env and other sensitive files
-└── README.md         # Documentation
-```
+Environment variables are used to configure the connection between the components.
 
----
+## 2. Create an `.env` file
 
-## ⚙️ Requirements
+In the root of your project, create a `.env` file with the following variables. Replace the placeholders with actual values.
 
-Make sure you have installed:
+### Database configuration
 
-- `git`
-- `jq` (for JSON parsing)
-- `bash`
-- SSH access to your GitHub repository
+DB_HOST=
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+DB_PORT=
 
-Install `jq` (if needed):
+### Backend configuration
 
-```bash
-sudo apt update
-sudo apt install jq
-```
+SECRET_KEY=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b856
+DEBUG=False
+ALLOWED_HOSTS=0.0.0.0,localhost,127.0.0.1
 
----
+### Frontend configuration
 
-## 📥 Setup
+VITE_API_BASE_URL=http://localhost/
+VITE_WEBSOCKET_BASE_URL=ws://localhost/
 
-1. Clone the repository:
+## 3. Build the Docker containers
+
+Once the `.env` file is ready, you can build the containers by running:
 
 ```bash
-git clone git@github.com:aliskuraieva/devops_intern_kuraieva.git
-cd devops_intern_kuraieva
+docker-compose up --build
 ```
 
-2. Copy the sample environment file:
+This command will:
+
+- Build the Docker images for the backend, frontend, and Nginx services.
+- Set up PostgreSQL and configure it with the environment variables in the `.env` file.
+
+## 4. Run the containers
+
+After the build process completes, the following services will be running:
+
+- **PostgreSQL**: Database service for the backend.
+- **Backend**: The backend Django application.
+- **Frontend**: The frontend application.
+- **Nginx**: Reverse proxy for handling HTTP requests and forwarding them to the backend and frontend.
+
+To start the containers, use the following command:
 
 ```bash
-cp .env.sample .env
+docker-compose up
 ```
 
-3. Edit the `.env` file and fill in your values:
+This will start the containers in the background and you will be able to access the following:
 
-```env
-REPO_URL=
-BACKUP_DIR=
-VERSION_FILE=
-```
+- **Frontend**: [http://localhost:8080](http://localhost:8080)
+- **Backend**: The backend is available through Nginx at [http://localhost/api/](http://localhost/api/).
 
-4. Make the script executable:
+## 5. Accessing the backend container
+
+If you need to enter the backend container to perform tasks (e.g., run Django management commands), you can do so by running:
 
 ```bash
-chmod +x backup.sh
+docker exec -it <backend_container_id_or_name> /bin/bash
 ```
 
----
+## 6. Stopping the containers
 
-## 🚀 Running the Script with Docker (For Task)
-
-For this task, you need to run the script using Docker. Follow these steps:
-
-1. **Create a Dockerfile**
-
-2. **Build the Docker Image:**
+To stop the containers, run:
 
 ```bash
-docker build -t backup-script .
+docker-compose down
 ```
 
-3. **Run the Docker Container:**
+This will stop and remove all containers, but the data in the PostgreSQL volume (`postgres_data`) will persist.
+
+## 7. Clearing volumes (optional)
+
+If you want to remove all the volumes, including PostgreSQL data, you can run:
 
 ```bash
-docker run --rm -v "$(pwd)/.env:/backup/.env" backup-script --max-runs 3 --max-backups 5
+docker-compose down -v
 ```
 
-### Explanation of Docker Commands:
+This will stop the containers and remove the volumes as well.
 
-- `docker build -t backup-script .`: Builds the Docker image from the current directory using the provided Dockerfile.
-- `docker run --rm -v "$(pwd)/.env:/backup/.env" backup-script`: Runs the backup script in a Docker container with the environment variables from your `.env` file.
+## Nginx Configuration
 
----
+Nginx is configured as a reverse proxy:
 
-## 📂 versions.json Example
+- **Frontend**: Served on port 8080.
+- **Backend**: Available through `/api/` on port 80.
 
-```json
-[
-  {
-    "version": "1.0.1",
-    "date": "2025-04-23",
-    "filename": "your-repo_1.0.1.tar.gz",
-    "size": "382944"
-  }
-]
+If you need to make changes to the Nginx configuration, you can modify the `nginx/default.conf` file in the `nginx` directory.
+
+## Troubleshooting
+
+- **PostgreSQL container fails to start**: Ensure the environment variables for the database are correct in the `.env` file.
+- **Backend not connecting to the database**: Check if the `DB_HOST` is set to `postgres` and the port is `5432` in the backend container environment.
+
 ```
 
----
-
-## ❗ Notes
-
-- **Never commit your `.env` file to Git!**
-- Ensure your SSH key is added to GitHub.
-- If you get `Permission denied (publickey)`, check your SSH access.
-- **Important:** If you use SSH to clone repositories, you must either follow the instructions in this README to correctly prepare your SSH key or the setup should be handled automatically in the bash script or Dockerfile without manual intervention.
-
----
-
-## 🔑 SSH Key Setup Instructions
-
-If you want to use SSH access inside Docker, you must:
-
-1. Generate a new SSH key if you don't have one:
-
-```bash
-ssh-keygen -t ed25519 -C "your_email@example.com"
 ```
-
-2. Add the public SSH key to your GitHub account (Settings → SSH and GPG keys → New SSH Key).
-
-Copy the public key:
-
-```bash
-cat ~/.ssh/id_ed25519.pub
-```
-
-3. When running the Docker container, mount your `.ssh` directory:
-
-```bash
-docker run --rm \
-  -v "$HOME/.ssh:/root/.ssh:ro" \
-  -v "$(pwd)/.env:/backup/.env" \
-  backup-script --max-runs 3 --max-backups 5
-```
-
----
