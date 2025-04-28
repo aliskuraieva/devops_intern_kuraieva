@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Load environment variables
 if [[ -f .env ]]; then
     source .env
 else
@@ -10,6 +11,9 @@ fi
 echo "REPO_URL: $REPO_URL"
 echo "BACKUP_DIR: $BACKUP_DIR"
 echo "VERSION_FILE: $VERSION_FILE"
+
+# Extract repo name from URL
+REPO_NAME=$(basename -s .git "$REPO_URL")
 
 # Check if required variables are set
 if [[ -z "$REPO_URL" || -z "$BACKUP_DIR" || -z "$VERSION_FILE" ]]; then
@@ -58,16 +62,13 @@ backup() {
     # Create a temporary directory to clone the repo
     temp_dir=$(mktemp -d)
 
-    # Extract repo name from URL
-    REPO_NAME=$(basename -s .git "$REPO_URL")
-
     echo "Cloning repo into $temp_dir/$REPO_NAME..."
     git clone "$REPO_URL" "$temp_dir/$REPO_NAME"
 
     # Ensure the directory exists before creating the archive
     if [ -d "$temp_dir/$REPO_NAME" ]; then
         tar -czf "$BACKUP_DIR/$filename" -C "$temp_dir" "$REPO_NAME"
-        rm -rf "$temp_dir/$REPO_NAME"  # Clean up temporary directory
+        rm -rf "$temp_dir"  # Clean up temporary directory
     else
         echo "Error: Repository directory does not exist after cloning."
         exit 1
@@ -119,13 +120,11 @@ for ((i=0; i<MAX_RUNS; i++)); do
 done
 
 # Delete old backups if there are more than MAX_BACKUPS
-if [[ "$MAX_BACKUPS" =~ ^[0-9]+$ ]] && [ "$MAX_BACKUPS" -gt 0 ]; then
-    backups=( $(ls -1t "$BACKUP_DIR"/"${REPO_NAME}"_*.tar.gz 2>/dev/null) )
-    total=${#backups[@]}
-    if (( total > MAX_BACKUPS )); then
-        for ((j=MAX_BACKUPS; j<total; j++)); do
-            echo "Deleted old backup: ${backups[$j]}"
-            rm -f "${backups[$j]}"
-        done
-    fi
+backups=( $(ls -1t "$BACKUP_DIR"/"${REPO_NAME}"_*.tar.gz 2>/dev/null) )
+total=${#backups[@]}
+if (( total > MAX_BACKUPS )); then
+    for ((j=MAX_BACKUPS; j<total; j++)); do
+        echo "Deleted old backup: ${backups[$j]}"
+        rm -f "${backups[$j]}"
+    done
 fi

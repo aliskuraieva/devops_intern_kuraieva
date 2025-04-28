@@ -53,11 +53,9 @@ cp .env.sample .env
 3. Edit the `.env` file and fill in your values:
 
 ```env
-REPO_URL=git@github.com:yourusername/yourrepo.git
-BACKUP_DIR=/path/to/backup/directory
-REPO_NAME=your-repo-name
-MAX_BACKUPS=5
-MAX_RUNS=3
+REPO_URL=
+BACKUP_DIR=
+VERSION_FILE=
 ```
 
 4. Make the script executable:
@@ -113,21 +111,35 @@ docker run --rm -v "$(pwd)/.env:/backup/.env" backup-script --max-runs 3 --max-b
 - **Never commit your `.env` file to Git!**
 - Ensure your SSH key is added to GitHub.
 - If you get `Permission denied (publickey)`, check your SSH access.
+- **Important:** If you use SSH to clone repositories, you must either follow the instructions in this README to correctly prepare your SSH key or the setup should be handled automatically in the bash script or Dockerfile without manual intervention.
 
 ---
 
-## ✅ Verification
+## 🔑 SSH Key Setup Instructions
 
-1. Create a new `backup` branch.
-2. Add and commit all changes:
+If you want to use SSH access inside Docker, you must:
 
-```bash
-git add .
-git commit -m "Initial backup script"
-```
-
-3. Push to remote:
+1. Generate a new SSH key if you don't have one:
 
 ```bash
-git push origin backup
+ssh-keygen -t ed25519 -C "your_email@example.com"
 ```
+
+2. Add the public SSH key to your GitHub account (Settings → SSH and GPG keys → New SSH Key).
+
+Copy the public key:
+
+```bash
+cat ~/.ssh/id_ed25519.pub
+```
+
+3. When running the Docker container, mount your `.ssh` directory:
+
+```bash
+docker run --rm \
+  -v "$HOME/.ssh:/root/.ssh:ro" \
+  -v "$(pwd)/.env:/backup/.env" \
+  backup-script --max-runs 3 --max-backups 5
+```
+
+---
