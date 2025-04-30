@@ -53,15 +53,9 @@ cp .env.sample .env
 3. Edit the `.env` file and fill in your values:
 
 ```env
-REPO_URL=
-BACKUP_DIR=
-VERSION_FILE=
-```
-
-4. Make the script executable:
-
-```bash
-chmod +x backup.sh
+REPO_URL=git@github.com:your_user/your_repo.git
+BACKUP_DIR=/backup
+VERSION_FILE=/backup/versions.json
 ```
 
 ---
@@ -70,7 +64,7 @@ chmod +x backup.sh
 
 For this task, you need to run the script using Docker. Follow these steps:
 
-1. **Create a Dockerfile**
+1. **Create a Dockerfile** (if not done yet).
 
 2. **Build the Docker Image:**
 
@@ -80,14 +74,30 @@ docker build -t backup-script .
 
 3. **Run the Docker Container:**
 
+Make sure to create a backup folder on your host:
+
 ```bash
-docker run --rm -v "$(pwd)/.env:/backup/.env" backup-script --max-runs 3 --max-backups 5
+mkdir -p ~/backup
+```
+
+Ensure the folder is accessible with correct permissions. To allow read and write access for your user, run:
+
+```bash
+sudo chown -R alisa:alisa ~/backup
+sudo chmod -R 755 ~/backup
+```
+
+Then run the following command to execute the backup:
+
+```bash
+docker run --rm   -v "$HOME/backup:/backup"   -v "$(pwd)/.env:/backup/.env"   -v "$HOME/.ssh:/root/.ssh:ro"   backup-script --max-runs 3 --max-backups 5
 ```
 
 ### Explanation of Docker Commands:
 
 - `docker build -t backup-script .`: Builds the Docker image from the current directory using the provided Dockerfile.
-- `docker run --rm -v "$(pwd)/.env:/backup/.env" backup-script`: Runs the backup script in a Docker container with the environment variables from your `.env` file.
+- `docker run ...`: Runs the backup script in Docker with access to environment variables and SSH key.
+- Mounting `~/backup` ensures files are created on host with your user permissions (not root).
 
 ---
 
@@ -136,10 +146,7 @@ cat ~/.ssh/id_ed25519.pub
 3. When running the Docker container, mount your `.ssh` directory:
 
 ```bash
-docker run --rm \
-  -v "$HOME/.ssh:/root/.ssh:ro" \
-  -v "$(pwd)/.env:/backup/.env" \
-  backup-script --max-runs 3 --max-backups 5
+docker run --rm   -v "$HOME/.ssh:/root/.ssh:ro"   -v "$HOME/backup:/backup"   -v "$(pwd)/.env:/backup/.env"   backup-script --max-runs 3 --max-backups 5
 ```
 
----
+This setup ensures your backup functionality works securely via SSH inside Docker.
