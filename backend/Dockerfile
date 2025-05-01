@@ -1,17 +1,10 @@
-FROM python:3.12-alpine AS build
+FROM python:3.11-alpine3.20
 
 WORKDIR /app
+COPY . /app
 
-# Update and install security patches for Alpine OS
-RUN apk update && apk upgrade && \
-    apk add --no-cache gcc libc-dev libpq-dev
+RUN pip install -r requirements.txt
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN chmod +x /app/start.sh
 
-# Copy the rest of the app
-COPY . .
-
-# Run the app
-CMD ["./start.sh"]
+CMD ["sleep", "3600"]

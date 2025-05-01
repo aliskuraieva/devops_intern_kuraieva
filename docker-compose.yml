@@ -8,7 +8,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     networks:
       - app-network
 
@@ -21,12 +21,12 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
-      - DB_PORT=5432
+      - DB_PORT=${DB_PORT}
       - SECRET_KEY=${SECRET_KEY}
-      - DEBUG=False
-      - ALLOWED_HOSTS=*
+      - DEBUG=${DEBUG}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
     volumes:
-      - ./backend/static:/static
+      - backend_static:/static
     ports:
       - "8000:8000"
     depends_on:
@@ -39,8 +39,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     environment:
-      - VITE_API_BASE_URL=http://localhost/api/
-      - VITE_WEBSOCKET_BASE_URL=ws://localhost/
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+      - VITE_WEBSOCKET_BASE_URL=${VITE_WEBSOCKET_BASE_URL}
     ports:
       - "8080:8080"
     depends_on:
@@ -52,9 +52,6 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
-    volumes:
-      - ./frontend/dist:/usr/share/nginx/html
-      - ./backend/static:/etc/static
     ports:
       - "80:80"
     depends_on:
@@ -65,6 +62,7 @@ services:
 
 volumes:
   postgres_data:
+  backend_static:
 
 
 networks:
