@@ -21,8 +21,10 @@ if [[ -z "$REPO_URL" || -z "$BACKUP_DIR" || -z "$VERSION_FILE" ]]; then
     exit 1
 fi
 
-# Make sure the backup directory exists
+# Make sure the backup directory exists and set correct permissions
 mkdir -p "$BACKUP_DIR"
+chmod -R 755 "$BACKUP_DIR"
+chown -R "$(id -u)":"$(id -g)" "$BACKUP_DIR"
 
 # Create the version file if it doesn't exist
 if [ ! -f "$VERSION_FILE" ]; then

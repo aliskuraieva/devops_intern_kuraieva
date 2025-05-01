@@ -80,24 +80,37 @@ Make sure to create a backup folder on your host:
 mkdir -p ~/backup
 ```
 
-Ensure the folder is accessible with correct permissions. To allow read and write access for your user, run:
+Ensure the folder is accessible with the correct permissions. To allow read and write access for all users, the following commands can be used:
 
-```bash
-sudo chown -R alisa:alisa ~/backup
-sudo chmod -R 755 ~/backup
-```
+1. **For Docker Container:**
+   In the Dockerfile, the backup folder `/app/backups` is created with universal permissions to ensure that the container can access it:
+
+   ```dockerfile
+   RUN mkdir -p /app/backups && chmod -R 777 /app/backups
+   ```
+
+2. **For Host Machine (e.g., Windows, Linux):**
+   Ensure that the local `~/backup` folder (on the host machine) has universal access, so that Docker can read and write files there. Run the following command:
+
+   ```bash
+   sudo chmod -R 777 ~/backup
+   ```
+
+   This ensures that any process, regardless of user, can access the backup folder both inside the container and on the host machine.
+
+These steps can be done automatically without manual intervention during Docker build and run, ensuring that the folder permissions are set correctly for all users.
 
 Then run the following command to execute the backup:
 
 ```bash
-docker run --rm   -v "$HOME/backup:/backup"   -v "$(pwd)/.env:/backup/.env"   -v "$HOME/.ssh:/root/.ssh:ro"   backup-script --max-runs 3 --max-backups 5
+docker run --rm -v "$HOME/.ssh:/root/.ssh:ro" -v "$HOME/backup:/app/backups" -v "$(pwd)/.env:/app/.env" backup-script --max-runs 3 --max-backups 5
 ```
 
 ### Explanation of Docker Commands:
 
 - `docker build -t backup-script .`: Builds the Docker image from the current directory using the provided Dockerfile.
 - `docker run ...`: Runs the backup script in Docker with access to environment variables and SSH key.
-- Mounting `~/backup` ensures files are created on host with your user permissions (not root).
+- Mounting `~/backup` ensures files are created on the host with your user permissions (not root).
 
 ---
 
@@ -146,7 +159,7 @@ cat ~/.ssh/id_ed25519.pub
 3. When running the Docker container, mount your `.ssh` directory:
 
 ```bash
-docker run --rm   -v "$HOME/.ssh:/root/.ssh:ro"   -v "$HOME/backup:/backup"   -v "$(pwd)/.env:/backup/.env"   backup-script --max-runs 3 --max-backups 5
+docker run --rm -v "$HOME/.ssh:/root/.ssh:ro" -v "$HOME/backup:/app/backups" -v "$(pwd)/.env:/app/.env" backup-script --max-runs 3 --max-backups 5
 ```
 
 This setup ensures your backup functionality works securely via SSH inside Docker.
